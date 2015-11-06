@@ -117,7 +117,7 @@
 //   <i> When the Cortex-M SysTick timer is used, the input clock 
 //   <i> is on most systems identical with the core clock.
 #ifndef OS_CLOCK
- #define OS_CLOCK       180000000
+ #define OS_CLOCK       64000000
 #endif
  
 //   <o>RTX Timer tick interval value [us] <1-1000000>
