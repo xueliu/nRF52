@@ -1,12 +1,12 @@
 /*----------------------------------------------------------------------------
- *      RL-ARM - RTX
+ *      CMSIS-RTOS  -  RTX
  *----------------------------------------------------------------------------
  *      Name:    RTX_Conf_CM.C
  *      Purpose: Configuration of CMSIS RTX Kernel for Cortex-M
- *      Rev.:    V4.74
+ *      Rev.:    V4.70.1
  *----------------------------------------------------------------------------
  *
- * Copyright (c) 1999-2009 KEIL, 2009-2013 ARM Germany GmbH
+ * Copyright (c) 1999-2009 KEIL, 2009-2015 ARM Germany GmbH
  * All rights reserved.
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -31,14 +31,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *---------------------------------------------------------------------------*/
-
+ 
 #include "cmsis_os.h"
-#include "nrf51.h"
-#include "nrf51_bitfields.h"
+ 
+
 /*----------------------------------------------------------------------------
  *      RTX User configuration part BEGIN
  *---------------------------------------------------------------------------*/
-
+ 
 //-------- <<< Use Configuration Wizard in Context Menu >>> -----------------
 //
 // <h>Thread Configuration
@@ -48,44 +48,51 @@
 //   <i> Defines max. number of user threads that will run at the same time.
 //   <i> Default: 6
 #ifndef OS_TASKCNT
- #define OS_TASKCNT     3
+ #define OS_TASKCNT     6
 #endif
-
+ 
 //   <o>Default Thread stack size [bytes] <64-4096:8><#/4>
 //   <i> Defines default stack size for threads with osThreadDef stacksz = 0
 //   <i> Default: 200
 #ifndef OS_STKSIZE
- #define OS_STKSIZE     50
+ #define OS_STKSIZE     50      // this stack size value is in words
 #endif
-
+ 
 //   <o>Main Thread stack size [bytes] <64-32768:8><#/4>
 //   <i> Defines stack size for main thread.
 //   <i> Default: 200
 #ifndef OS_MAINSTKSIZE
- #define OS_MAINSTKSIZE 250
+ #define OS_MAINSTKSIZE 50      // this stack size value is in words
 #endif
-
+ 
 //   <o>Number of threads with user-provided stack size <0-250>
 //   <i> Defines the number of threads with user-provided stack size.
 //   <i> Default: 0
 #ifndef OS_PRIVCNT
  #define OS_PRIVCNT     0
 #endif
-
+ 
 //   <o>Total stack size [bytes] for threads with user-provided stack size <0-1048576:8><#/4>
 //   <i> Defines the combined stack size for threads with user-provided stack size.
 //   <i> Default: 0
 #ifndef OS_PRIVSTKSIZE
- #define OS_PRIVSTKSIZE 0
+ #define OS_PRIVSTKSIZE 0       // this stack size value is in words
 #endif
-
-//   <q>Check for stack overflow
-//   <i> Includes the stack checking code for stack overflow.
-//   <i> Note that additional code reduces the Kernel performance.
+ 
+//   <q>Stack overflow checking
+//   <i> Enable stack overflow checks at thread switch.
+//   <i> Enabling this option increases slightly the execution time of a thread switch.
 #ifndef OS_STKCHECK
  #define OS_STKCHECK    1
 #endif
-
+ 
+//   <q>Stack usage watermark
+//   <i> Initialize thread stack with watermark pattern for analyzing stack usage (current/maximum) in System and Thread Viewer.
+//   <i> Enabling this option increases significantly the execution time of osThreadCreate.
+#ifndef OS_STKINIT
+#define OS_STKINIT      0
+#endif
+ 
 //   <o>Processor mode for thread execution 
 //     <0=> Unprivileged mode 
 //     <1=> Privileged mode
@@ -93,16 +100,16 @@
 #ifndef OS_RUNPRIV
  #define OS_RUNPRIV     1
 #endif
-
+ 
 // </h>
-
+ 
 // <h>RTX Kernel Timer Tick Configuration
 // ======================================
 //   <q> Use Cortex-M SysTick timer as RTX Kernel Timer
 //   <i> Cortex-M processors provide in most cases a SysTick timer that can be used as 
 //   <i> as time-base for RTX.
 #ifndef OS_SYSTICK
- #define OS_SYSTICK     0
+ #define OS_SYSTICK     1
 #endif
 //
 //   <o>RTOS Kernel Timer input clock frequency [Hz] <1-1000000000>
@@ -110,9 +117,9 @@
 //   <i> When the Cortex-M SysTick timer is used, the input clock 
 //   <i> is on most systems identical with the core clock.
 #ifndef OS_CLOCK
- #define OS_CLOCK       32768
+ #define OS_CLOCK       180000000
 #endif
-
+ 
 //   <o>RTX Timer tick interval value [us] <1-1000000>
 //   <i> The RTX Timer tick interval value is used to calculate timeout values.
 //   <i> When the Cortex-M SysTick timer is enabled, the value also configures the SysTick timer.
@@ -120,9 +127,9 @@
 #ifndef OS_TICK
  #define OS_TICK        1000
 #endif
-
+ 
 // </h>
-
+ 
 // <h>System Configuration
 // =======================
 //
@@ -133,23 +140,23 @@
 #ifndef OS_ROBIN
  #define OS_ROBIN       1
 #endif
-
+ 
 //   <o>Round-Robin Timeout [ticks] <1-1000>
 //   <i> Defines how long a thread will execute before a thread switch.
 //   <i> Default: 5
 #ifndef OS_ROBINTOUT
  #define OS_ROBINTOUT   5
 #endif
-
+ 
 // </e>
-
+ 
 // <e>User Timers
 // ==============
 //   <i> Enables user Timers
 #ifndef OS_TIMERS
  #define OS_TIMERS      1
 #endif
-
+ 
 //   <o>Timer Thread Priority
 //                        <1=> Low
 //     <2=> Below Normal  <3=> Normal  <4=> Above Normal
@@ -160,23 +167,23 @@
 #ifndef OS_TIMERPRIO
  #define OS_TIMERPRIO   5
 #endif
-
+ 
 //   <o>Timer Thread stack size [bytes] <64-4096:8><#/4>
 //   <i> Defines stack size for Timer thread.
 //   <i> Default: 200
 #ifndef OS_TIMERSTKSZ
- #define OS_TIMERSTKSZ  200
+ #define OS_TIMERSTKSZ  50     // this stack size value is in words
 #endif
-
+ 
 //   <o>Timer Callback Queue size <1-32>
 //   <i> Number of concurrent active timer callback functions.
 //   <i> Default: 4
 #ifndef OS_TIMERCBQS
- #define OS_TIMERCBQS   8
+ #define OS_TIMERCBQS   4
 #endif
-
+ 
 // </e>
-
+ 
 //   <o>ISR FIFO Queue size<4=>   4 entries  <8=>   8 entries
 //                         <12=> 12 entries  <16=> 16 entries
 //                         <24=> 24 entries  <32=> 32 entries
@@ -188,11 +195,11 @@
 #ifndef OS_FIFOSZ
  #define OS_FIFOSZ      16
 #endif
-
+ 
 // </h>
-
+ 
 //------------- <<< end of configuration section >>> -----------------------
-
+ 
 // Standard library system mutexes
 // ===============================
 //  Define max. number system mutexes that are used to protect 
@@ -200,161 +207,79 @@
 #ifndef OS_MUTEXCNT
  #define OS_MUTEXCNT    8
 #endif
-
+ 
 /*----------------------------------------------------------------------------
  *      RTX User configuration part END
  *---------------------------------------------------------------------------*/
-
-#define OS_TRV          ((uint32_t)(((double)OS_CLOCK*(double)OS_TICK)/1E6+0.5)-1)
-
+ 
+#define OS_TRV          ((uint32_t)(((double)OS_CLOCK*(double)OS_TICK)/1E6)-1)
+ 
 
 /*----------------------------------------------------------------------------
  *      Global Functions
  *---------------------------------------------------------------------------*/
-
+ 
 /*--------------------------- os_idle_demon ---------------------------------*/
-#define TIMER_MASK 0xFFFFFF
-volatile unsigned int rtos_suspend;
 
-void os_idle_demon (void)
-{
-    unsigned int expected_time;
-    unsigned int prev_time;
-
-    for (;; )
-    {
-        rtos_suspend   = 1;
-        expected_time  = os_suspend();
-        expected_time &= TIMER_MASK;
-
-        if (expected_time > 2)
-        {
-            prev_time       = NRF_RTC1->COUNTER;
-            expected_time  += prev_time;
-            NRF_RTC1->CC[0] =
-                (expected_time > TIMER_MASK) ? expected_time - TIMER_MASK : expected_time;
-            NRF_RTC1->INTENCLR = RTC_INTENSET_TICK_Msk;
-
-            NVIC_EnableIRQ(RTC1_IRQn);
-            __disable_irq();
-
-            if (rtos_suspend)
-            {
-                NRF_RTC1->INTENSET = RTC_INTENSET_COMPARE0_Msk;
-                __WFI();
-                NRF_RTC1->EVENTS_COMPARE[0] = 0;
-                NRF_RTC1->INTENCLR          = RTC_INTENSET_COMPARE0_Msk;
-            }
-            __enable_irq();
-            NRF_RTC1->INTENSET = RTC_INTENSET_TICK_Msk;
-
-            expected_time = NRF_RTC1->COUNTER;
-            expected_time = (expected_time >= prev_time)
-                            ? expected_time - prev_time : TIMER_MASK - prev_time + expected_time;
-        }
-        os_resume(expected_time);
-    }
+/// \brief The idle demon is running when no other thread is ready to run
+void os_idle_demon (void) {
+ 
+  for (;;) {
+    /* HERE: include optional user code to be executed when no thread runs.*/
+  }
 }
-
-
+ 
 #if (OS_SYSTICK == 0)   // Functions for alternative timer as RTX kernel timer
-
+ 
 /*--------------------------- os_tick_init ----------------------------------*/
-
-// Initialize alternative hardware timer as RTX kernel timer
-// Return: IRQ number of the alternative hardware timer
-int os_tick_init (void)
-{
-    NRF_CLOCK->LFCLKSRC            = (CLOCK_LFCLKSRC_SRC_Xtal << CLOCK_LFCLKSRC_SRC_Pos);
-    NRF_CLOCK->EVENTS_LFCLKSTARTED = 0;
-    NRF_CLOCK->TASKS_LFCLKSTART    = 1;
-
-    while (NRF_CLOCK->EVENTS_LFCLKSTARTED == 0)
-    {
-        // Do nothing.
-    }
-    NRF_RTC1->PRESCALER   = OS_TRV;
-    NRF_RTC1->INTENSET    = RTC_INTENSET_TICK_Msk;
-    NRF_RTC1->TASKS_START = 1;
-
-    return (RTC1_IRQn);
+ 
+/// \brief Initializes an alternative hardware timer as RTX kernel timer
+/// \return                             IRQ number of the alternative hardware timer
+int os_tick_init (void) {
+  return (-1);  /* Return IRQ number of timer (0..239) */
 }
-
-
+ 
 /*--------------------------- os_tick_val -----------------------------------*/
-
-// Get alternative hardware timer current value (0 .. OS_TRV)
-uint32_t os_tick_val(void)
-{
-    return NRF_RTC1->COUNTER;
+ 
+/// \brief Get alternative hardware timer's current value (0 .. OS_TRV)
+/// \return                             Current value of the alternative hardware timer
+uint32_t os_tick_val (void) {
+  return (0);
 }
-
-
+ 
 /*--------------------------- os_tick_ovf -----------------------------------*/
-
-// Get alternative hardware timer overflow flag
-// Return: 1 - overflow, 0 - no overflow
-
-uint32_t os_tick_ovf(void)
-{
-    return NRF_RTC1->EVENTS_OVRFLW;
+ 
+/// \brief Get alternative hardware timer's  overflow flag
+/// \return                             Overflow flag\n
+///                                     - 1 : overflow
+///                                     - 0 : no overflow
+uint32_t os_tick_ovf (void) {
+  return (0);
 }
-
-
+ 
 /*--------------------------- os_tick_irqack --------------------------------*/
-
-// Acknowledge alternative hardware timer interrupt
-void os_tick_irqack(void)
-{
-    if ((NRF_RTC1->EVENTS_TICK != 0) &&
-        ((NRF_RTC1->INTENSET & RTC_INTENSET_TICK_Msk) != 0))
-    {
-        NRF_RTC1->EVENTS_TICK = 0;
-    }
+ 
+/// \brief Acknowledge alternative hardware timer interrupt
+void os_tick_irqack (void) {
+  /* ... */
 }
-
-
-// This branch a problem with reurn from interrput.
-
-#if defined (__CC_ARM)                               /* ARM Compiler */
-__asm __declspec(noreturn) void RTC1_IRQHandler(void)
-{
-    EXTERN OS_Tick_Handler
-    BL OS_Tick_Handler
-}
-
-
-#elif defined (__ICCARM__)                           /* IAR Compiler */
-#error "IAR no supported yet."
-
-#elif defined (__GNUC__)                             /* GNU Compiler */
-extern void OS_Tick_Handler(void);
-void RTC1_IRQHandler()
-__attribute__((naked));
-void RTC1_IRQHandler()
-{
-    OS_Tick_Handler();
-}
-
-
-#else
-#error "Unknown compiler! Don't know how to create SVC function."
-#endif
-
-
+ 
 #endif   // (OS_SYSTICK == 0)
-
+ 
 /*--------------------------- os_error --------------------------------------*/
-
+ 
 /* OS Error Codes */
 #define OS_ERROR_STACK_OVF      1
 #define OS_ERROR_FIFO_OVF       2
 #define OS_ERROR_MBX_OVF        3
-
+#define OS_ERROR_TIMER_OVF      4
+ 
 extern osThreadId svcThreadGetId (void);
-void os_error(uint32_t error_code) {
-  /* This function is called when a runtime error is detected.  */
-  /* Parameter 'error_code' holds the runtime error code.       */
+ 
+/// \brief Called when a runtime error is detected
+/// \param[in]   error_code   actual error code that has been detected
+void os_error (uint32_t error_code) {
+ 
   /* HERE: include optional code to be executed on runtime error. */
   switch (error_code) {
     case OS_ERROR_STACK_OVF:
@@ -367,17 +292,20 @@ void os_error(uint32_t error_code) {
     case OS_ERROR_MBX_OVF:
       /* Mailbox overflow detected. */
       break;
+    case OS_ERROR_TIMER_OVF:
+      /* User Timer Callback Queue overflow detected. */
+      break;
   }
   for (;;);
 }
-
+ 
 
 /*----------------------------------------------------------------------------
  *      RTX Configuration Functions
  *---------------------------------------------------------------------------*/
-
+ 
 #include "RTX_CM_lib.h"
-
+ 
 /*----------------------------------------------------------------------------
  * end of file
  *---------------------------------------------------------------------------*/
