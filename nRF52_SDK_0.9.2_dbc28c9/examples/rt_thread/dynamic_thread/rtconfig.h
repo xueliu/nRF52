@@ -17,7 +17,7 @@
 /* SECTION: RT_DEBUG */
 /* Thread Debug */
 #define RT_DEBUG
-//#define RT_DEBUG_INIT 1
+#define RT_DEBUG_INIT 1
 #define RT_USING_OVERFLOW_CHECK
 
 /* Using Hook */
@@ -49,7 +49,7 @@
 
 /* SECTION: Memory Management */
 /* Using Memory Pool Management*/
-/* #define RT_USING_MEMPOOL */
+#define RT_USING_MEMPOOL
 
 /* Using Dynamic Heap Management */
 #define RT_USING_HEAP
