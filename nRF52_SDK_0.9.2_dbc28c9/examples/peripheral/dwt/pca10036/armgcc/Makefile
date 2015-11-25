@@ -1,11 +1,11 @@
-PROJECT_NAME := blinky_blank_pca10036
+PROJECT_NAME := uart_pca10036
 
 export OUTPUT_FILENAME
 #MAKEFILE_NAME := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 MAKEFILE_NAME := $(MAKEFILE_LIST)
 MAKEFILE_DIR := $(dir $(MAKEFILE_NAME) ) 
 
-TEMPLATE_PATH = ../../../../../../components/toolchain/gcc
+TEMPLATE_PATH = ../../../../../components/toolchain/gcc
 ifeq ($(OS),Windows_NT)
 include $(TEMPLATE_PATH)/Makefile.windows
 else
@@ -37,21 +37,38 @@ remduplicates = $(strip $(if $1,$(firstword $1) $(call remduplicates,$(filter-ou
 
 #source common to all targets
 C_SOURCE_FILES += \
-../../../../../../components/toolchain/system_nrf52.c \
-../../../main.c \
-../../../../../../components/drivers_nrf/delay/nrf_delay.c \
+../../../../../components/toolchain/system_nrf52.c \
+../../main.c \
+../../../../../components/libraries/util/app_error.c \
+../../../../../components/libraries/fifo/app_fifo.c \
+../../../../../components/libraries/util/app_util_platform.c \
+../../../../../components/libraries/util/nrf_assert.c \
+../../../../../components/libraries/uart/retarget.c \
+../../../../../components/libraries/uart/app_uart_fifo.c \
+../../../../../components/drivers_nrf/delay/nrf_delay.c \
+../../../../../components/drivers_nrf/common/nrf_drv_common.c \
+../../../../../components/drivers_nrf/uart/nrf_drv_uart.c \
 
 #assembly files common to all targets
-ASM_SOURCE_FILES  = ../../../../../../components/toolchain/gcc/gcc_startup_nrf52.s
+ASM_SOURCE_FILES  = ../../../../../components/toolchain/gcc/gcc_startup_nrf52.s
 
 #includes common to all targets
-INC_PATHS  = -I../../../../../../components/toolchain/gcc
-INC_PATHS += -I../../../../../../components/toolchain
-INC_PATHS += -I../../..
-INC_PATHS += -I../../../../../bsp
-INC_PATHS += -I../../../../../../components/device
-INC_PATHS += -I../../../../../../components/drivers_nrf/delay
-INC_PATHS += -I../../../../../../components/drivers_nrf/hal
+INC_PATHS  = -I../../config/uart_pca10036
+INC_PATHS += -I../../config
+INC_PATHS += -I../../../../bsp
+INC_PATHS += -I../../../../../components/drivers_nrf/nrf_soc_nosd
+INC_PATHS += -I../../../../../components/device
+INC_PATHS += -I../../../../../components/libraries/uart
+INC_PATHS += -I../../../../../components/drivers_nrf/hal
+INC_PATHS += -I../../../../../components/drivers_nrf/delay
+INC_PATHS += -I../..
+INC_PATHS += -I../../../../../components/libraries/util
+INC_PATHS += -I../../../../../components/drivers_nrf/uart
+INC_PATHS += -I../../../../../components/drivers_nrf/common
+INC_PATHS += -I../../../../../components/toolchain
+INC_PATHS += -I../../../../../components/drivers_nrf/config
+INC_PATHS += -I../../../../../components/libraries/fifo
+INC_PATHS += -I../../../../../components/toolchain/gcc
 
 OBJECT_DIRECTORY = _build
 LISTING_DIRECTORY = $(OBJECT_DIRECTORY)
@@ -117,7 +134,7 @@ vpath %.s $(ASM_PATHS)
 OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
 
 nrf52832_xxaa: OUTPUT_FILENAME := nrf52832_xxaa
-nrf52832_xxaa: LINKER_SCRIPT=blinky_gcc_nrf52.ld
+nrf52832_xxaa: LINKER_SCRIPT=uart_gcc_nrf52.ld
 nrf52832_xxaa: $(BUILD_DIRECTORIES) $(OBJECTS)
 	@echo Linking target: $(OUTPUT_FILENAME).out
 	$(NO_ECHO)$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
