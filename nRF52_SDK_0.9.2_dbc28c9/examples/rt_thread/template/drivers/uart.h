@@ -18,7 +18,7 @@
 #define TX_PIN_NUMBER          6
 #define CTS_PIN_NUMBER         7
 #define RTS_PIN_NUMBER         5
-#define HWFC                   false
+#define HWFC                   true
 
 
 void rt_hw_uart_init(void);

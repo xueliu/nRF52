@@ -12,10 +12,19 @@
 #ifndef __BOARD_H__
 #define __BOARD_H__
 
-// <o> Internal SRAM memory size[Kbytes] <64>
-//  <i>Default: 64 but now only 32 is avaiable
+// <o> Internal SRAM memory size[Kbytes] <64 or 32>
+//  <i>Default: 64
 #define NRF_SRAM_BEGIN  (0x20000000)
-#define NRF_SRAM_SIZE	(32 * 1024)
+
+#if defined(BOARD_PCA10036)
+	#define NRF_SRAM_SIZE	(32 * 1024)  
+#elif defined(BOARD_PCA10040)
+	#define NRF_SRAM_SIZE	(64 * 1024)  
+#else
+#error "Board is not defined"
+
+#endif
+
 #define NRF_SRAM_END	(NRF_SRAM_BEGIN + NRF_SRAM_SIZE)
 
 void rt_hw_board_init(void);
