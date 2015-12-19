@@ -73,20 +73,22 @@ static void uart_loopback_test()
     uint8_t   rx_data;
 
     // Start sending one byte and see if you get the same
-    for (uint32_t i = 0; i < MAX_TEST_DATA_BYTES; i++)
-    {
-        uint32_t err_code;
-        while(app_uart_put(tx_data[i]) != NRF_SUCCESS);
+//    for (uint32_t i = 0; i < MAX_TEST_DATA_BYTES; i++)
+//    {
+//        uint32_t err_code;
+	for(;true;) {
+        while(app_uart_put("HELLO\n") != NRF_SUCCESS);
 
-        nrf_delay_ms(10);
-        err_code = app_uart_get(&rx_data);
+        nrf_delay_ms(100);
+	}
+//        err_code = app_uart_get(&rx_data);
 
-        if ((rx_data != tx_data[i]) || (err_code != NRF_SUCCESS))
-        {
-            show_error();
-        }
-    }
-    return;
+//        if ((rx_data != tx_data[i]) || (err_code != NRF_SUCCESS))
+//        {
+//            show_error();
+//        }
+//    }
+//    return;
 }
 
 
@@ -123,7 +125,13 @@ int main(void)
 
 #ifndef ENABLE_LOOPBACK_TEST
     printf("\n\rStart: \n\r");
+	
+		for(;true;) {
+        printf("%d\n", 0xff);
 
+        nrf_delay_ms(1000);
+	}
+	  
     while (true)
     {
         uint8_t cr;
