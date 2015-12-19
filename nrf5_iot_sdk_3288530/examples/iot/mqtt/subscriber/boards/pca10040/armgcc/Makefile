@@ -1,0 +1,365 @@
+PROJECT_NAME := iot_lwip_mqtt_subscriber_pca10040
+
+export OUTPUT_FILENAME
+#MAKEFILE_NAME := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
+MAKEFILE_NAME := $(MAKEFILE_LIST)
+MAKEFILE_DIR := $(dir $(MAKEFILE_NAME) ) 
+
+TEMPLATE_PATH = ../../../../../../../components/toolchain/gcc
+ifeq ($(OS),Windows_NT)
+include $(TEMPLATE_PATH)/Makefile.windows
+else
+include $(TEMPLATE_PATH)/Makefile.posix
+endif
+
+MK := mkdir
+RM := rm -rf
+
+#echo suspend
+ifeq ("$(VERBOSE)","1")
+NO_ECHO := 
+else
+NO_ECHO := @
+endif
+
+# Toolchain commands
+CC              := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-gcc'
+AS              := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-as'
+AR              := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-ar' -r
+LD              := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-ld'
+NM              := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-nm'
+OBJDUMP         := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-objdump'
+OBJCOPY         := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-objcopy'
+SIZE            := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-size'
+
+#function for removing duplicates in a list
+remduplicates = $(strip $(if $1,$(firstword $1) $(call remduplicates,$(filter-out $(firstword $1),$1))))
+
+#source common to all targets
+C_SOURCE_FILES += \
+$(abspath ../../../../../../../components/libraries/button/app_button.c) \
+$(abspath ../../../../../../../components/libraries/util/app_error.c) \
+$(abspath ../../../../../../../components/libraries/fifo/app_fifo.c) \
+$(abspath ../../../../../../../components/libraries/scheduler/app_scheduler.c) \
+$(abspath ../../../../../../../components/libraries/timer/app_timer.c) \
+$(abspath ../../../../../../../components/libraries/timer/app_timer_appsh.c) \
+$(abspath ../../../../../../../components/libraries/trace/app_trace.c) \
+$(abspath ../../../../../../../components/libraries/mem_manager/mem_manager.c) \
+$(abspath ../../../../../../../components/libraries/util/nrf_assert.c) \
+$(abspath ../../../../../../../components/libraries/uart/retarget.c) \
+$(abspath ../../../../../../../external/lwip/src/core/def.c) \
+$(abspath ../../../../../../../external/lwip/src/core/dhcp.c) \
+$(abspath ../../../../../../../external/lwip/src/core/ipv6/dhcp6.c) \
+$(abspath ../../../../../../../external/lwip/src/core/dns.c) \
+$(abspath ../../../../../../../external/lwip/src/core/ipv4/icmp.c) \
+$(abspath ../../../../../../../external/lwip/src/core/ipv6/icmp6.c) \
+$(abspath ../../../../../../../external/lwip/src/core/ipv6/inet6.c) \
+$(abspath ../../../../../../../external/lwip/src/core/inet_chksum.c) \
+$(abspath ../../../../../../../external/lwip/src/core/init.c) \
+$(abspath ../../../../../../../external/lwip/src/core/ipv4/ip4.c) \
+$(abspath ../../../../../../../external/lwip/src/core/ipv4/ip4_addr.c) \
+$(abspath ../../../../../../../external/lwip/src/core/ipv6/ip6.c) \
+$(abspath ../../../../../../../external/lwip/src/core/ipv6/ip6_addr.c) \
+$(abspath ../../../../../../../external/lwip/src/core/memp.c) \
+$(abspath ../../../../../../../external/lwip/src/core/ipv6/mld6.c) \
+$(abspath ../../../../../../../external/lwip/src/core/ipv6/nd6.c) \
+$(abspath ../../../../../../../external/lwip/src/core/netif.c) \
+$(abspath ../../../../../../../external/lwip/src/port/nrf_platform_port.c) \
+$(abspath ../../../../../../../external/lwip/src/core/pbuf.c) \
+$(abspath ../../../../../../../external/lwip/src/core/raw.c) \
+$(abspath ../../../../../../../external/lwip/src/core/sys.c) \
+$(abspath ../../../../../../../external/lwip/src/core/tcp.c) \
+$(abspath ../../../../../../../external/lwip/src/core/tcp_in.c) \
+$(abspath ../../../../../../../external/lwip/src/core/tcp_out.c) \
+$(abspath ../../../../../../../external/lwip/src/core/timers.c) \
+$(abspath ../../../../../../../external/lwip/src/core/udp.c) \
+$(abspath ../../../../../../../components/libraries/uart/app_uart_fifo.c) \
+$(abspath ../../../../../../../components/drivers_nrf/delay/nrf_delay.c) \
+$(abspath ../../../../../../../components/drivers_nrf/common/nrf_drv_common.c) \
+$(abspath ../../../../../../../components/drivers_nrf/gpiote/nrf_drv_gpiote.c) \
+$(abspath ../../../../../../../components/drivers_nrf/rng/nrf_drv_rng.c) \
+$(abspath ../../../../../../../components/drivers_nrf/uart/nrf_drv_uart.c) \
+$(abspath ../../../../../../../components/drivers_nrf/pstorage/pstorage.c) \
+$(abspath ../../../../../../bsp/bsp.c) \
+$(abspath ../../../main.c) \
+$(abspath ../../../../../../../components/ble/common/ble_advdata.c) \
+$(abspath ../../../../../../../components/ble/common/ble_conn_params.c) \
+$(abspath ../../../../../../../components/ble/common/ble_srv_common.c) \
+$(abspath ../../../../../../../components/iot/errno/errno.c) \
+$(abspath ../../../../../../../components/iot/context_manager/iot_context_manager.c) \
+$(abspath ../../../../../../../components/iot/iot_timer/iot_timer.c) \
+$(abspath ../../../../../../../components/iot/medium/ipv6_medium_ble.c) \
+$(abspath ../../../../../../../components/iot/common/ipv6_parse.c) \
+$(abspath ../../../../../../../components/iot/mqtt/mqtt.c) \
+$(abspath ../../../../../../../components/iot/mqtt/mqtt_decoder.c) \
+$(abspath ../../../../../../../components/iot/mqtt/mqtt_encoder.c) \
+$(abspath ../../../../../../../components/iot/mqtt/mqtt_transport.c) \
+$(abspath ../../../../../../../external/mbedtls/library/aes.c) \
+$(abspath ../../../../../../../external/mbedtls/library/aesni.c) \
+$(abspath ../../../../../../../external/mbedtls/library/arc4.c) \
+$(abspath ../../../../../../../external/mbedtls/library/asn1parse.c) \
+$(abspath ../../../../../../../external/mbedtls/library/asn1write.c) \
+$(abspath ../../../../../../../external/mbedtls/library/base64.c) \
+$(abspath ../../../../../../../external/mbedtls/library/bignum.c) \
+$(abspath ../../../../../../../external/mbedtls/library/blowfish.c) \
+$(abspath ../../../../../../../external/mbedtls/library/camellia.c) \
+$(abspath ../../../../../../../external/mbedtls/library/ccm.c) \
+$(abspath ../../../../../../../external/mbedtls/library/certs.c) \
+$(abspath ../../../../../../../external/mbedtls/library/cipher.c) \
+$(abspath ../../../../../../../external/mbedtls/library/cipher_wrap.c) \
+$(abspath ../../../../../../../external/mbedtls/library/ctr_drbg.c) \
+$(abspath ../../../../../../../external/mbedtls/library/debug.c) \
+$(abspath ../../../../../../../external/mbedtls/library/des.c) \
+$(abspath ../../../../../../../external/mbedtls/library/dhm.c) \
+$(abspath ../../../../../../../external/mbedtls/library/ecdh.c) \
+$(abspath ../../../../../../../external/mbedtls/library/ecdsa.c) \
+$(abspath ../../../../../../../external/mbedtls/library/ecp.c) \
+$(abspath ../../../../../../../external/mbedtls/library/ecp_curves.c) \
+$(abspath ../../../../../../../external/mbedtls/library/entropy.c) \
+$(abspath ../../../../../../../external/mbedtls/library/entropy_poll.c) \
+$(abspath ../../../../../../../external/mbedtls/library/error.c) \
+$(abspath ../../../../../../../external/mbedtls/library/gcm.c) \
+$(abspath ../../../../../../../external/mbedtls/library/havege.c) \
+$(abspath ../../../../../../../external/mbedtls/library/hmac_drbg.c) \
+$(abspath ../../../../../../../external/mbedtls/library/md.c) \
+$(abspath ../../../../../../../external/mbedtls/library/md2.c) \
+$(abspath ../../../../../../../external/mbedtls/library/md4.c) \
+$(abspath ../../../../../../../external/mbedtls/library/md5.c) \
+$(abspath ../../../../../../../external/mbedtls/library/md_wrap.c) \
+$(abspath ../../../../../../../external/mbedtls/library/memory_buffer_alloc.c) \
+$(abspath ../../../../../../../external/mbedtls/library/oid.c) \
+$(abspath ../../../../../../../external/mbedtls/library/padlock.c) \
+$(abspath ../../../../../../../external/mbedtls/library/pem.c) \
+$(abspath ../../../../../../../external/mbedtls/library/pk.c) \
+$(abspath ../../../../../../../external/mbedtls/library/pk_wrap.c) \
+$(abspath ../../../../../../../external/mbedtls/library/pkcs11.c) \
+$(abspath ../../../../../../../external/mbedtls/library/pkcs12.c) \
+$(abspath ../../../../../../../external/mbedtls/library/pkcs5.c) \
+$(abspath ../../../../../../../external/mbedtls/library/pkparse.c) \
+$(abspath ../../../../../../../external/mbedtls/library/pkwrite.c) \
+$(abspath ../../../../../../../external/mbedtls/library/platform.c) \
+$(abspath ../../../../../../../external/mbedtls/library/ripemd160.c) \
+$(abspath ../../../../../../../external/mbedtls/library/rsa.c) \
+$(abspath ../../../../../../../external/mbedtls/library/sha1.c) \
+$(abspath ../../../../../../../external/mbedtls/library/sha256.c) \
+$(abspath ../../../../../../../external/mbedtls/library/sha512.c) \
+$(abspath ../../../../../../../external/mbedtls/library/ssl_cache.c) \
+$(abspath ../../../../../../../external/mbedtls/library/ssl_ciphersuites.c) \
+$(abspath ../../../../../../../external/mbedtls/library/ssl_cli.c) \
+$(abspath ../../../../../../../external/mbedtls/library/ssl_cookie.c) \
+$(abspath ../../../../../../../external/mbedtls/library/ssl_srv.c) \
+$(abspath ../../../../../../../external/mbedtls/library/ssl_ticket.c) \
+$(abspath ../../../../../../../external/mbedtls/library/ssl_tls.c) \
+$(abspath ../../../../../../../external/mbedtls/library/threading.c) \
+$(abspath ../../../../../../../components/iot/tls/mbedtls/tls_interface.c) \
+$(abspath ../../../../../../../external/mbedtls/library/version.c) \
+$(abspath ../../../../../../../external/mbedtls/library/version_features.c) \
+$(abspath ../../../../../../../external/mbedtls/library/x509.c) \
+$(abspath ../../../../../../../external/mbedtls/library/x509_create.c) \
+$(abspath ../../../../../../../external/mbedtls/library/x509_crl.c) \
+$(abspath ../../../../../../../external/mbedtls/library/x509_crt.c) \
+$(abspath ../../../../../../../external/mbedtls/library/x509_csr.c) \
+$(abspath ../../../../../../../external/mbedtls/library/xtea.c) \
+$(abspath ../../../../../../../components/toolchain/system_nrf52.c) \
+$(abspath ../../../../../../../components/iot/medium/ble_ncfgs/ble_ncfgs.c) \
+$(abspath ../../../../../../../components/iot/medium/commissioning/commissioning.c) \
+$(abspath ../../../../../../../components/softdevice/common/softdevice_handler/softdevice_handler.c) \
+$(abspath ../../../../../../../components/softdevice/common/softdevice_handler/softdevice_handler_appsh.c) \
+
+#assembly files common to all targets
+ASM_SOURCE_FILES  = $(abspath ../../../../../../../components/toolchain/gcc/gcc_startup_nrf52.s)
+
+#assembly files common to all targets
+LIBS  = $(abspath ../../../../../../../components/iot/ble_6lowpan/lib/ble_6lowpan.a)
+
+#includes common to all targets
+INC_PATHS  = -I$(abspath ../../../config)
+INC_PATHS += -I$(abspath ../../../../../../../components/iot/errno)
+INC_PATHS += -I$(abspath ../../../../../../../components/softdevice/s1xx_iot/headers)
+INC_PATHS += -I$(abspath ../../../../../../../components/drivers_nrf/common)
+INC_PATHS += -I$(abspath ../../../../../../../components/softdevice/common/softdevice_handler)
+INC_PATHS += -I$(abspath ../../../../../../../external/lwip/src/include)
+INC_PATHS += -I$(abspath ../../../../../../../components/iot/ble_6lowpan)
+INC_PATHS += -I$(abspath ../../../../../../../components/drivers_nrf/hal)
+INC_PATHS += -I$(abspath ../../../../../../../components/ble/common)
+INC_PATHS += -I$(abspath ../../../../../../../external/lwip/src/port)
+INC_PATHS += -I$(abspath ../../../../../../../components/libraries/fifo)
+INC_PATHS += -I$(abspath ../../../../../../../components/libraries/trace)
+INC_PATHS += -I$(abspath ../../../../../../../components/device)
+INC_PATHS += -I$(abspath ../../../../../../../components/libraries/uart)
+INC_PATHS += -I$(abspath ../../../../../../../components/drivers_nrf/rng)
+INC_PATHS += -I$(abspath ../../../../../../../components/iot/medium)
+INC_PATHS += -I$(abspath ../../../../../../../components/drivers_nrf/config)
+INC_PATHS += -I$(abspath ../../../../../../../components/libraries/mem_manager)
+INC_PATHS += -I$(abspath ../../../../../../../components/drivers_nrf/uart)
+INC_PATHS += -I$(abspath ../../../../../../../components/iot/ble_ipsp)
+INC_PATHS += -I$(abspath ../../../../../../../components/libraries/scheduler)
+INC_PATHS += -I$(abspath ../../../../../../../components/iot/iot_timer)
+INC_PATHS += -I$(abspath ../../../../../../../components/iot/tls/mbedtls/tls/config)
+INC_PATHS += -I$(abspath ../../../../../../../external/mbedtls/include)
+INC_PATHS += -I$(abspath ../../../../../../../external/lwip/src/include/netif)
+INC_PATHS += -I$(abspath ../../../../../../../components/iot/medium/commissioning)
+INC_PATHS += -I$(abspath ../../../../../../../components/iot/tls)
+INC_PATHS += -I$(abspath ../../../../../../../components/iot/include)
+INC_PATHS += -I$(abspath ../../../../../../../components/drivers_nrf/pstorage)
+INC_PATHS += -I$(abspath ../../..)
+INC_PATHS += -I$(abspath ../../../../../../../../../components/iot/tls)
+INC_PATHS += -I$(abspath ../../../../../../../components/iot/context_manager)
+INC_PATHS += -I$(abspath ../../../../../../../../../components/iot_timer)
+INC_PATHS += -I$(abspath ../../../../../../../components/toolchain/gcc)
+INC_PATHS += -I$(abspath ../../../../../../../components/drivers_nrf/delay)
+INC_PATHS += -I$(abspath ../../../../../../../components/iot/medium/ble_ncfgs)
+INC_PATHS += -I$(abspath ../../../../../../../components/drivers_nrf/gpiote)
+INC_PATHS += -I$(abspath ../../../../../../../components/iot/mqtt)
+INC_PATHS += -I$(abspath ../../../../../../../components/softdevice/s1xx_iot/headers/nrf52)
+INC_PATHS += -I$(abspath ../../../../../../../external/lwip/src/include/lwip)
+INC_PATHS += -I$(abspath ../../../../../../../components/iot/common)
+INC_PATHS += -I$(abspath ../../../../../../../components/libraries/timer)
+INC_PATHS += -I$(abspath ../../../../../../../external/lwip/src/port/arch)
+INC_PATHS += -I$(abspath ../../../../../../../components/libraries/button)
+INC_PATHS += -I$(abspath ../../../../../../../components/libraries/util)
+INC_PATHS += -I$(abspath ../../../../../../bsp)
+INC_PATHS += -I$(abspath ../../../../../../../components/toolchain)
+INC_PATHS += -I$(abspath ../../../../../../../components/iot/medium/include)
+
+OBJECT_DIRECTORY = _build
+LISTING_DIRECTORY = $(OBJECT_DIRECTORY)
+OUTPUT_BINARY_DIRECTORY = $(OBJECT_DIRECTORY)
+
+# Sorting removes duplicates
+BUILD_DIRECTORIES := $(sort $(OBJECT_DIRECTORY) $(OUTPUT_BINARY_DIRECTORY) $(LISTING_DIRECTORY) )
+
+#flags common to all targets
+CFLAGS  = -D__HEAP_SIZE=512
+CFLAGS += -DSWI_DISABLE0
+CFLAGS += -DUART_TX_BUF_SIZE=256
+CFLAGS += -DSOFTDEVICE_PRESENT
+CFLAGS += -Ds1xx
+CFLAGS += -DNRF52
+CFLAGS += -DCONFIG_GPIO_AS_PINRESET
+CFLAGS += -D__STACK_SIZE=4608
+CFLAGS += -DENABLE_DEBUG_LOG_SUPPORT
+CFLAGS += -DBLE_STACK_SUPPORT_REQD
+CFLAGS += -DNRF_TLS_MAX_INSTANCE_COUNT=1
+CFLAGS += -DMBEDTLS_CONFIG_FILE=\"nrf_tls_config.h\"
+CFLAGS += -DBOARD_PCA10040
+CFLAGS += -mcpu=cortex-m4
+CFLAGS += -mthumb -mabi=aapcs --std=gnu99
+CFLAGS += -w -O3
+CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
+# keep every function in separate section. This will allow linker to dump unused functions
+CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
+CFLAGS += -fno-builtin --short-enums
+# keep every function in separate section. This will allow linker to dump unused functions
+LDFLAGS += -Xlinker -Map=$(LISTING_DIRECTORY)/$(OUTPUT_FILENAME).map
+LDFLAGS += -mthumb -mabi=aapcs -L $(TEMPLATE_PATH) -T$(LINKER_SCRIPT)
+LDFLAGS += -mcpu=cortex-m4
+LDFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
+# let linker to dump unused sections
+LDFLAGS += -Wl,--gc-sections
+# use newlib in nano version
+LDFLAGS += --specs=nano.specs -lc -lnosys
+
+# Assembler flags
+ASMFLAGS += -x assembler-with-cpp
+ASMFLAGS += -D__HEAP_SIZE=512
+ASMFLAGS += -DSWI_DISABLE0
+ASMFLAGS += -DUART_TX_BUF_SIZE=256
+ASMFLAGS += -DSOFTDEVICE_PRESENT
+ASMFLAGS += -Ds1xx
+ASMFLAGS += -DNRF52
+ASMFLAGS += -DCONFIG_GPIO_AS_PINRESET
+ASMFLAGS += -D__STACK_SIZE=4608
+ASMFLAGS += -DENABLE_DEBUG_LOG_SUPPORT
+ASMFLAGS += -DBLE_STACK_SUPPORT_REQD
+ASMFLAGS += -DNRF_TLS_MAX_INSTANCE_COUNT=1
+ASMFLAGS += -DBOARD_PCA10040
+
+#default target - first one defined
+default: clean nrf52832_xxaa_s1xx_iot
+
+#building all targets
+all: clean
+	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e cleanobj
+	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e nrf52832_xxaa_s1xx_iot
+
+#target for printing all targets
+help:
+	@echo following targets are available:
+	@echo 	nrf52832_xxaa_s1xx_iot
+
+C_SOURCE_FILE_NAMES = $(notdir $(C_SOURCE_FILES))
+C_PATHS = $(call remduplicates, $(dir $(C_SOURCE_FILES) ) )
+C_OBJECTS = $(addprefix $(OBJECT_DIRECTORY)/, $(C_SOURCE_FILE_NAMES:.c=.o) )
+
+ASM_SOURCE_FILE_NAMES = $(notdir $(ASM_SOURCE_FILES))
+ASM_PATHS = $(call remduplicates, $(dir $(ASM_SOURCE_FILES) ))
+ASM_OBJECTS = $(addprefix $(OBJECT_DIRECTORY)/, $(ASM_SOURCE_FILE_NAMES:.s=.o) )
+
+vpath %.c $(C_PATHS)
+vpath %.s $(ASM_PATHS)
+
+OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
+
+nrf52832_xxaa_s1xx_iot: OUTPUT_FILENAME := nrf52832_xxaa_s1xx_iot
+nrf52832_xxaa_s1xx_iot: LINKER_SCRIPT=iot_lwip_mqtt_subscriber_gcc_nrf52.ld
+
+nrf52832_xxaa_s1xx_iot: $(BUILD_DIRECTORIES) $(OBJECTS)
+	@echo Linking target: $(OUTPUT_FILENAME).out
+	$(NO_ECHO)$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
+	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e finalize
+
+## Create build directories
+$(BUILD_DIRECTORIES):
+	echo $(MAKEFILE_NAME)
+	$(MK) $@
+
+# Create objects from C SRC files
+$(OBJECT_DIRECTORY)/%.o: %.c
+	@echo Compiling file: $(notdir $<)
+	$(NO_ECHO)$(CC) $(CFLAGS) $(INC_PATHS) -c -o $@ $<
+
+# Assemble files
+$(OBJECT_DIRECTORY)/%.o: %.s
+	@echo Assembly file: $(notdir $<)
+	$(NO_ECHO)$(CC) $(ASMFLAGS) $(INC_PATHS) -c -o $@ $<
+# Link
+$(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out: $(BUILD_DIRECTORIES) $(OBJECTS)
+	@echo Linking target: $(OUTPUT_FILENAME).out
+	$(NO_ECHO)$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
+## Create binary .bin file from the .out file
+$(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).bin: $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
+	@echo Preparing: $(OUTPUT_FILENAME).bin
+	$(NO_ECHO)$(OBJCOPY) -O binary $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).bin
+
+## Create binary .hex file from the .out file
+$(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex: $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
+	@echo Preparing: $(OUTPUT_FILENAME).hex
+	$(NO_ECHO)$(OBJCOPY) -O ihex $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex
+
+finalize: genbin genhex echosize
+
+genbin:
+	@echo Preparing: $(OUTPUT_FILENAME).bin
+	$(NO_ECHO)$(OBJCOPY) -O binary $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).bin
+
+## Create binary .hex file from the .out file
+genhex: 
+	@echo Preparing: $(OUTPUT_FILENAME).hex
+	$(NO_ECHO)$(OBJCOPY) -O ihex $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex
+echosize:
+	-@echo ''
+	$(NO_ECHO)$(SIZE) $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
+	-@echo ''
+
+clean:
+	$(RM) $(BUILD_DIRECTORIES)
+
+cleanobj:
+	$(RM) $(BUILD_DIRECTORIES)/*.o
+flash: $(MAKECMDGOALS)
+	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/$<.hex
+	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/$<.hex -f nrf52 --sectorerase
+	nrfjprog --reset
+
+## Flash softdevice

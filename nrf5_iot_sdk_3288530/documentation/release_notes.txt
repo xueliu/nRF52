@@ -1,0 +1,121 @@
+nRF5 IoT SDK v. 0.9.0
+----------------------
+Highlights:
+    - Added new protocols LWM2M, TFTP - client roles only.
+    - Added BLE Joining Service - commissioning.
+    - Introduced TLS and DTLS support.
+    - Extended MQTT APIs to support security, QoS extensions and bug fixes.
+    - Added new feature to CoAP protocol - encoding and decoding block1 options.
+    - Added IoT DFU mechanism to upgrade software over IPv6.
+    - Introduced the IPv6 Medium module, which is an implementation-agnostic interface of the physical transport that facilitates IPv6 traffic.
+    - Bug fixes, API and documentation improvement.
+
+General:
+
+    The release package when unzipped has the following top-level structure. A brief explanation of the contents of each folder accompanies the structure below.
+
+    Nordic
+    |-- documentation        // nRF5 IoT SDK HTML documentation.
+    |-- components
+    |   |-- ble              // BLE modules.
+    |   |-- device           // nRF5x device description headers.
+    |   |-- drivers_nrf      // nRF5x peripheral drivers.
+    |   |-- iot              // IP stack and other IoT-related modules.
+    |   |-- libraries        // Common modules.
+    |   |-- softdevice       // The s1xx_iot SoftDevice and headers.
+    |   `-- toolchain        // Platform specific startup files and linker scripts.
+    |-- examples
+    |   |-- bsp              // Board headers.
+    |   `-- iot              // Various IPv6 example applications.
+    `-- external
+        |-- cJSON            // Third-party JSON parser.
+        |-- lwip             // Third-party lwIP TCP/IP implementation and porting for nRF5x.
+        `-- mbedtls          // mbedTLS library.
+
+Key features:
+
+    6LoWPAN and IPSP library
+        - 6LoWPAN compression and decompression.
+        - 6LoWPAN Node role.
+        - Packet flow control.
+        - IPv6 prefix management.
+        - The possibility to integrate in any third-party IPv6 stack.
+        - Can be integrated with an RTOS.
+
+    Nordic's IPv6 stack
+        - Support for multiple IP addresses.
+        - ICMPv6 module that can be configured to respond automatically to echo requests or handle them in the application by registering a callback.
+        - UDP socket APIs to listen on a port and/or to be a client.
+        - Can be integrated with an RTOS.
+        - DNS client support to resolve host names.
+        - SNTP client to request the time in Unix time format. Additionally, it is possible to request local time with triggering an NTP query.
+        - TFTP client to support file transfer with TFTP server.
+
+    Nordic's CoAP library
+        - CoAP message types CON, NON, ACK, and RESET.
+        - Token matching on responses to a local client generated request.
+        - Endpoint creation as resources.
+        - Automatic lookup of requested endpoint when receiving a remote request.
+        - Endpoint resource function callback to tune response message.
+        - Permission setting on endpoints to select methods to be handled by the endpoint resource callback function.
+        - Automatic generation of .well-known/core link-format discovery string.
+        - Support for observable resources and observing resources.
+
+    Nordic's LWM2M library
+        - Client initiated boostrap.
+        - Server registration/deregistration/update.
+        - Object and Instance creation of a subset of "OMA LWM2M" and "IPSO Smart Objects" objects.
+        - LWM2M TLV encoder/decoder.
+        - Link Format string generation of registered objects and object instances.
+        - DTLS support.
+
+    Nordic's MQTT library
+        - Publisher and Subscriber role implemented.
+        - Support for QoS0, QoS1 and QoS2.
+        - Notification on receiving flow control messages to application.
+        - MQTT message encoder/decoder.
+        - Support for version 3.1.1 and 3.1.0.
+        - TLS support.
+
+    Nordic's BSD Socket Interface
+        - Client UDP and TCP implemented only.
+        - Supports Blocking and Non-Blocking I/O.
+        - Compatible with POSIX Socket Interface.
+
+Following toolchains/devices have been used for testing and verification:
+    - ARM: MDK-ARM version 4.72.10, 5.16.0.0
+    - GCC: gcc-arm-embedded 4.9 2015q1
+    - Windows 7 SP1 64-bit
+    - Examples that exceed the code size of 32kBytes cannot be compiled with the unlicensed version of MDK-ARM.
+
+Supported boards:
+
+    - New version of nRF52 Dev. Kit (PCA10040)
+        nRF52832-QFAA BA
+
+Supported SoftDevices:
+
+    - s1xx_iot : This software is a prototype version, please refer to the supplied license.
+
+Known issues, limitations:
+
+    - 6LoWPAN Router role and 6LoWPAN Border Router role are not supported.
+    - IPv6 Router role is not supported.
+    - Global IPv6 addresses are configured from Prefix Option using Bluetooth Device Address as an IID.
+    - No analysis on radio, resource or other performance metrics has been performed as this is a technology prototype.
+    - It may be observed certain times that the BLE link disconnects and this may appear random to the user. Most often this occurs when receive buffers are unavailable to receive more data from the peer. Current configuration of the library should minimize the frequency of disconnects resulting from this, but cannot be completely ruled out.
+    - Currently no timers are implemented in IPv6 stack and hence lifetimes of prefixes, contexts, IP addresses etc. are not maintained.
+    - TCP: if both server and client use the lwIP TCP implementation ported for nRF5x, closing the port from the client may fail and result in an undefined connection state. 
+    - Once BLE link is disconnected, lwIP example applications no longer get a global prefix. The only way to start using the examples with the global prefix again is to restart the application. 
+    - When connecting multiple kits to the same Bluetooth dongle on the router, disconnects may be observed. The root cause of this is not completely understood yet. However, changing connection interval on the router to (10ms, 15ms) helps to minimize the chances of disconnection.
+    - Earlier Linux kernels used to disconnect the 6LoWPAN logical channel as well as the BLE physical link on the issue of 6LoWPAN disconnect. Recent kernels do not terminate the BLE physical link on 6LoWPAN disconnect. However, this SDK assumes that a 6LoWPAN disconnect will trigger the application to enter advertising mode. This is not a valid assumption based on the kernel version used to test the examples. The 6LoWPAN connect should succeed even if the BLE physical link already existed.  
+
+Changes:
+    - NEW Modules     : BLE Joining Service (Commissioning), LWM2M, TFTP, File System, IoT Bootloader, TLS interface.
+    - CoAP            : API changes to support DTLS bindings.
+    - CoAP            : Removed port number wildcard to be allowed in coap_message_conf_t. Use of local port when sending CoAP messages has to be configured by the application.
+    - CoAP            : Added library support for encoding and decoding block1 options.
+    - MQTT            : Extended APIs to support security, QoS extensions. Bug fixes.
+    - Examples        : MQTT and CoAP DTLS examples updated to use TLS interface to provide security.
+    - 6LoWPAN library : Receive buffer size increased to 1280 from 1024 bytes and bug fixes.
+    - Documentation improvements.
